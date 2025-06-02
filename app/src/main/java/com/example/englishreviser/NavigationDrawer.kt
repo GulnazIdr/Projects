@@ -2,6 +2,7 @@
 
 package com.example.englishreviser
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -54,8 +55,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -95,7 +96,7 @@ class NavigationDrawer : ComponentActivity() {
             var folderList = folderDao.getFoldersByUser(currentUser).collectAsState(null).value
 
             EnglishReviserTheme {
-                    NavigationDrawerApp(dbViewModel, folderList, viewmodel)
+                    NavigationDrawerApp(dbViewModel, folderList, currentUser, viewmodel)
             }
         }
     }
@@ -105,6 +106,7 @@ class NavigationDrawer : ComponentActivity() {
 fun NavigationDrawerApp(
     dbViewModel: ActionViewModel,
     listOfFolders: List<FolderInfoEntity>?,
+    currentUser: String,
     viewmodel: ViewModelStates
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -138,7 +140,7 @@ fun NavigationDrawerApp(
                 }
 
                 if(viewmodel.isAddDialogShown)
-                    DialogAddFolder(dbViewModel, onDismiss = {viewmodel.dismissAddDialog()})
+                    DialogAddFolder(dbViewModel, currentUser, onDismiss = {viewmodel.dismissAddDialog()})
 
             }
 
@@ -155,6 +157,8 @@ fun DrawerContent(
     navController: NavHostController,
     drawerState: DrawerState
 ){
+    val context = LocalContext.current
+
     ModalDrawerSheet {
         Spacer(modifier = Modifier.height(16.dp))
         val scope = rememberCoroutineScope()
@@ -176,7 +180,10 @@ fun DrawerContent(
                 )
             }
             IconButton(onClick = {
-
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
             }) {
                 Row(modifier = Modifier
                     .fillMaxWidth()
@@ -262,6 +269,7 @@ fun FolderItem(index: Int, listOfFolders: List<FolderInfoEntity>?, modifier: Mod
 @Composable
 fun DialogAddFolder(
     dbViewModel: ActionViewModel,
+    currentUser: String,
     onDismiss:() -> Unit,
     modifier: Modifier = Modifier
 ){
@@ -294,7 +302,7 @@ fun DialogAddFolder(
                         Text("Cancel")
                     }
                     ElevatedButton(onClick = {
-                        dbViewModel.onEvent(ActionEvent.AddFolder(folderName))
+                        dbViewModel.onEvent(ActionEvent.AddFolder(folderName, currentUser))
                         dbViewModel.onEvent(ActionEvent.SaveFolder)
                         onDismiss()
                     }) {

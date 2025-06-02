@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.coroutineScope
 import com.example.englishreviser.room.UserInfoDAO
 import com.example.englishreviser.room.UserInfoViewModel
 import com.example.englishreviser.room.UserInfoViewModelFactory
@@ -46,6 +48,7 @@ class LogInActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
+            lifecycle.coroutineScope
             EnglishReviserTheme {
                 LogInForm(
                     dbViewModel,
@@ -68,8 +71,7 @@ fun LogInForm(
 
     val context = LocalContext.current
 
-  //  val userPasswordMatch = userDAO.getPasswordByUserName(username)
-   // Log.d("LOGIN", userPasswordMatch.toString())
+    val isValidUser by dbViewModel.checkUser(username, userPassword, userDAO).collectAsState(initial = false)
 
     Column(
         modifier.fillMaxSize(),
@@ -84,7 +86,7 @@ fun LogInForm(
 
         OutlinedTextField(
             value = username,
-            onValueChange = {username = it},
+            onValueChange = { username = it },
             label = {Text("Name")},
             isError = false,
             supportingText = {Text("")}
@@ -92,7 +94,7 @@ fun LogInForm(
 
         OutlinedTextField(
             value = userPassword,
-            onValueChange = {userPassword = it},
+            onValueChange = { userPassword = it },
             label = {Text("Password")},
             isError = false,
             supportingText = {Text("")},
@@ -100,7 +102,10 @@ fun LogInForm(
         )
 
         OutlinedButton(
-            onClick = {},
+            onClick = {
+                if(isValidUser)
+                    context.startActivity(Intent(context, NavigationDrawer::class.java))
+            },
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .width(200.dp)
@@ -119,10 +124,4 @@ fun LogInForm(
                 })
         )
     }
-}
-
-fun checkUser(typedName: String, typedPassword: String, userDAO: UserInfoDAO){
-    val userPasswordMatch = userDAO.getPasswordByUserName(typedName)
-
-    // TODO:  
 }

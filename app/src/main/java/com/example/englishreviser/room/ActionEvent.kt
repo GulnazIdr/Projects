@@ -2,7 +2,7 @@ package com.example.englishreviser.room
 
 sealed interface ActionEvent {
     object SaveFolder: ActionEvent
-    data class AddFolder(val folderName: String): ActionEvent
+    data class AddFolder(val folderName: String, val userName: String): ActionEvent
     data class DeleteFolder(val folder: FolderInfoEntity): ActionEvent
 
     object SaveCard: ActionEvent

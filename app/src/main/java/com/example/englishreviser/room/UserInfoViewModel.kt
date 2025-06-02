@@ -5,6 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 class UserInfoViewModel( private val dao: UserInfoDAO ) : ViewModel() {
@@ -13,6 +17,11 @@ class UserInfoViewModel( private val dao: UserInfoDAO ) : ViewModel() {
     var email by mutableStateOf("")
     var phone by mutableStateOf("")
     var password by mutableStateOf("")
+
+    fun checkUser(typedName: String, typedPassword: String, dao: UserInfoDAO): Flow<Boolean> = flow {
+        var userPasswordMatch = dao.getPasswordByUserName(typedName).toString()
+        emit(userPasswordMatch == typedPassword)
+    }.flowOn(Dispatchers.IO)
 
     fun onEvent(event : UserInfoEvent){
         when(event) {
@@ -39,13 +48,6 @@ class UserInfoViewModel( private val dao: UserInfoDAO ) : ViewModel() {
                     dao.insertUser(userInfo)
                 }
             }
-
-            is UserInfoEvent.GetUserInfo -> {
-                viewModelScope.launch {
-                    dao.getUserInfo(name)
-                }
-            }
         }
-
     }
 }

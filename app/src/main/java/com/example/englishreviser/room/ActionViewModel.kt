@@ -13,6 +13,7 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
     var translatedWord by mutableStateOf("")
 
     var folderName by mutableStateOf("")
+    var userName by mutableStateOf("")
 
     fun onEvent(event: ActionEvent){
         when(event){
@@ -43,6 +44,7 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
             //folders
             is ActionEvent.AddFolder -> {
                 folderName = event.folderName
+                userName = event.userName
             }
 
             is ActionEvent.DeleteFolder -> TODO()
@@ -51,7 +53,7 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
                 viewModelScope.launch {
                     val folder = FolderInfoEntity(
                         folderName = folderName,
-                        userName = ""
+                        userName = userName
                     )
                     folderDAO.insertFolder(folder)
                 }
