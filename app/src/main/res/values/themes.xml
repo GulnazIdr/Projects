@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.EnglishReviser" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.EnglishReviser.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.EnglishReviser.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.EnglishReviser.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>
