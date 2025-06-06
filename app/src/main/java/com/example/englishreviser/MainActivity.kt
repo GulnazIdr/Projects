@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.example.englishreviser.helpers.DataStoreManager
-import com.example.englishreviser.helpers.SplashActivity
 import com.example.englishreviser.room.FIELDS
 import com.example.englishreviser.room.UserInfoEvent
 import com.example.englishreviser.room.UserInfoViewModel
@@ -134,11 +133,14 @@ fun RegistrationForm(
 
         OutlinedButton (
             onClick = {
+                val intent = Intent(context, NavigationDrawer::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                }
                 dbViewModel.onEvent(UserInfoEvent.SaveUserInfo)
                 coroutine.launch {
                     dataStoreManager.saveCurrentUser(userName)
                 }
-                context.startActivity(Intent(context, SplashActivity::class.java))
+                context.startActivity(intent)
             },
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier

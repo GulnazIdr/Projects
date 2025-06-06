@@ -2,20 +2,17 @@
 
 package com.example.englishreviser
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,19 +22,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -55,21 +49,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.englishreviser.fragments.DrawerContent
 import com.example.englishreviser.helpers.DataStoreManager
 import com.example.englishreviser.room.ActionEvent
 import com.example.englishreviser.room.ActionViewModel
 import com.example.englishreviser.room.ActionViewModelFactory
 import com.example.englishreviser.room.FolderInfoEntity
+import com.example.englishreviser.room.UserInfoEntity
 import com.example.englishreviser.room.UsersDatabase
 import com.example.englishreviser.ui.theme.EnglishReviserTheme
 import com.example.englishreviser.ui_helpers.ViewModelStates
@@ -84,6 +80,8 @@ class NavigationDrawer : ComponentActivity() {
 
         val application = requireNotNull(this).application
 
+        val userDao = UsersDatabase.getDatabase(application).userDao()
+
         val folderDao = UsersDatabase.getDatabase(application).folderDao()
         val cardDao = UsersDatabase.getDatabase(application).cardDao()
 
@@ -92,11 +90,14 @@ class NavigationDrawer : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            var currentUser = dataStoreManager.getCurrentUser.collectAsState("developer").value
+            var currentUser = dataStoreManager.getCurrentUser.collectAsState("").value
             var folderList = folderDao.getFoldersByUser(currentUser).collectAsState(null).value
 
+            val userInfo by userDao.getUserInfo(currentUser)
+                .collectAsStateWithLifecycle(initialValue = null)
+
             EnglishReviserTheme {
-                    NavigationDrawerApp(dbViewModel, folderList, currentUser, viewmodel)
+                    NavigationDrawerApp(dbViewModel, folderList, currentUser, viewmodel, dataStoreManager, userInfo)
             }
         }
     }
@@ -107,7 +108,9 @@ fun NavigationDrawerApp(
     dbViewModel: ActionViewModel,
     listOfFolders: List<FolderInfoEntity>?,
     currentUser: String,
-    viewmodel: ViewModelStates
+    viewmodel: ViewModelStates,
+    dataStoreManager: DataStoreManager,
+    userInfo: UserInfoEntity?
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -115,7 +118,7 @@ fun NavigationDrawerApp(
 
     ModalNavigationDrawer(
         drawerContent = {
-            DrawerContent(navController, drawerState)
+            DrawerContent(navController, drawerState, dataStoreManager, userInfo)
         },
         drawerState = drawerState
     ) {
@@ -153,50 +156,6 @@ fun NavigationDrawerApp(
 }
 
 @Composable
-fun DrawerContent(
-    navController: NavHostController,
-    drawerState: DrawerState
-){
-    val context = LocalContext.current
-
-    ModalDrawerSheet {
-        Spacer(modifier = Modifier.height(16.dp))
-        val scope = rememberCoroutineScope()
-
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)) {
-            listOf("Home", "Profile", "Settings").forEach { screen ->
-                Text(
-                    text = screen,
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            navController.navigate(screen.lowercase())
-                            scope.launch { drawerState.close() }
-                        }
-                        .padding(12.dp) //padding between items
-                )
-            }
-            IconButton(onClick = {
-                val intent = Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                context.startActivity(intent)
-            }) {
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(5.dp)) { // TODO: make it look normal
-                    Icon(Icons.Filled.Logout, contentDescription = "Log out")
-                    Text(text = "Log out")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun NavigationGraph(navController: NavHostController, listOfFolders: List<FolderInfoEntity>?){
     NavHost(navController, startDestination = "home"){
         composable("home") {
@@ -209,7 +168,6 @@ fun NavigationGraph(navController: NavHostController, listOfFolders: List<Folder
             }
 
         }
-        composable("profile") { ScreenContent("Profile screen") }
         composable("settings") { ScreenContent("Settings screen") }
     }
 }

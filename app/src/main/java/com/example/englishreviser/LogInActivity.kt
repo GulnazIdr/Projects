@@ -2,6 +2,7 @@ package com.example.englishreviser
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,11 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.coroutineScope
+import com.example.englishreviser.helpers.DataStoreManager
 import com.example.englishreviser.room.UserInfoDAO
 import com.example.englishreviser.room.UserInfoViewModel
 import com.example.englishreviser.room.UserInfoViewModelFactory
 import com.example.englishreviser.room.UsersDatabase
 import com.example.englishreviser.ui.theme.EnglishReviserTheme
+import kotlinx.coroutines.launch
 
 class LogInActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,11 +50,14 @@ class LogInActivity : ComponentActivity() {
         val viewModelFactory = UserInfoViewModelFactory(userDao)
         val dbViewModel = ViewModelProvider(this, viewModelFactory)[(UserInfoViewModel::class.java)]
 
+        val dataStore = DataStoreManager(this)
+
         enableEdgeToEdge()
         setContent {
             lifecycle.coroutineScope
             EnglishReviserTheme {
                 LogInForm(
+                    dataStore,
                     dbViewModel,
                     userDao,
                     modifier = Modifier.fillMaxSize()
@@ -62,6 +69,7 @@ class LogInActivity : ComponentActivity() {
 
 @Composable
 fun LogInForm(
+    dataStoreManager: DataStoreManager,
     dbViewModel: UserInfoViewModel,
     userDAO: UserInfoDAO,
     modifier: Modifier = Modifier
@@ -71,6 +79,7 @@ fun LogInForm(
 
     val context = LocalContext.current
 
+    val coroutine = rememberCoroutineScope()
     val isValidUser by dbViewModel.checkUser(username, userPassword, userDAO).collectAsState(initial = false)
 
     Column(
@@ -103,8 +112,15 @@ fun LogInForm(
 
         OutlinedButton(
             onClick = {
-                if(isValidUser)
-                    context.startActivity(Intent(context, NavigationDrawer::class.java))
+                if(isValidUser) {
+                    val intent = Intent(context, NavigationDrawer::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                    context.startActivity(intent)
+                    coroutine.launch {
+                        dataStoreManager.saveCurrentUser(username)
+                    }
+                }
             },
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier

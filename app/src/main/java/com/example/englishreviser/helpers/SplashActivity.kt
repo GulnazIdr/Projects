@@ -2,6 +2,7 @@ package com.example.englishreviser.helpers
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +13,7 @@ import androidx.compose.runtime.setValue
 import com.example.englishreviser.MainActivity
 import com.example.englishreviser.NavigationDrawer
 import com.example.englishreviser.ui.theme.EnglishReviserTheme
+import kotlinx.coroutines.flow.first
 
 class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,20 +22,17 @@ class SplashActivity : ComponentActivity() {
 
         setContent {
             EnglishReviserTheme {
-                var isRegistered by remember { mutableStateOf("developer") }
-
                 LaunchedEffect(Unit) {
-                    dataStoreManager.getCurrentUser.collect { info ->
-                        isRegistered = info
-                    }
+                    var isRegistered = dataStoreManager.getCurrentUser.first()
+                    val destination = if (isRegistered.isBlank()) MainActivity::class.java
+                                      else NavigationDrawer::class.java
+
+                    startActivity(Intent(applicationContext, destination).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    })
+
+                    finish()
                 }
-
-                if (isRegistered.equals("developer"))
-                    startActivity(Intent(applicationContext, MainActivity::class.java))
-                else
-                    startActivity(Intent(applicationContext, NavigationDrawer::class.java))
-
-                finish()
             }
         }
     }
