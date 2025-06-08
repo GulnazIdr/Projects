@@ -1,6 +1,5 @@
 package com.example.englishreviser.ui_helpers
 
-import android.util.Log
 import android.util.Patterns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +27,7 @@ class ViewModelStates : ViewModel()  {
 
     fun validatePassword(): Boolean {
         passwordError =  when{
-            passwordValue.length < 5 -> ERR_LEN
+            passwordValue.length < 6 -> ERR_LEN
             !passwordValue.any {it.isDigit()} -> ERR_DIGIT
             !passwordValue.matches(regexSymbol) -> ERR_SPECIAL
             !passwordValue.any {it.isUpperCase()} -> ERR_UPPER
@@ -70,14 +69,25 @@ class ViewModelStates : ViewModel()  {
     }
 
     //dialog agg
-    var isAddDialogShown by mutableStateOf(false)
+    var isAddFolderDialogShown by mutableStateOf(false)
         private set
 
-    fun showAddDialog(){
-        isAddDialogShown = true
+    fun showAddFolderDialog(){
+        isAddFolderDialogShown = true
     }
 
-    fun dismissAddDialog(){
-        isAddDialogShown = false
+    fun dismissAddFolderDialog(){
+        isAddFolderDialogShown = false
+    }
+
+    var isAddCardDialogShown by mutableStateOf(false)
+        private set
+
+    fun showAddCardDialog(){
+        isAddFolderDialogShown = true
+    }
+
+    fun dismissAddCardDialog(){
+        isAddFolderDialogShown = false
     }
 }

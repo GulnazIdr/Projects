@@ -23,7 +23,7 @@ interface UserInfoDAO {
     fun getUsersInfo(): Flow<List<UserInfoEntity>>
 
     @Query("SELECT * FROM USER_DATA WHERE name = :name")
-    fun getUserInfo(name: String): Flow<UserInfoEntity>
+    fun getUserInfo(name: String): Flow<UserInfoEntity?>
 
     @Query("SELECT password FROM USER_DATA WHERE name = :name LIMIT 1")
     fun getPasswordByUserName(name: String): String?

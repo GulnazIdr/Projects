@@ -14,15 +14,10 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.PermIdentity
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.englishreviser.MainActivity
 import com.example.englishreviser.helpers.DataStoreManager
-import com.example.englishreviser.room.UserInfoEntity
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,11 +33,9 @@ fun DrawerContent(
     navController: NavHostController,
     drawerState: DrawerState,
     dataStoreManager: DataStoreManager,
-    userInfo: UserInfoEntity?
 ){
     val context = LocalContext.current
     val standardModifier = Modifier.fillMaxWidth().padding(5.dp)
-    var showProfile by remember { mutableStateOf(false) }
 
     ModalDrawerSheet {
         Spacer(modifier = Modifier.height(16.dp))
@@ -52,7 +44,21 @@ fun DrawerContent(
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)) {
-            listOf("Home", "Settings").forEach { screen ->
+
+            Row(modifier = standardModifier, verticalAlignment = Alignment.CenterVertically)
+            {
+
+                Icon(Icons.Filled.PermIdentity, contentDescription = "Profile")
+                Text(
+                    text = "Profile",
+                    modifier = Modifier.clickable{
+                        navController.navigate("profile")
+                        scope.launch { drawerState.close() }
+                    }.padding(start = 5.dp)
+                )
+            }
+
+            listOf("Settings").forEach { screen ->
                 Text(
                     text = screen,
                     fontSize = 18.sp,
@@ -65,20 +71,10 @@ fun DrawerContent(
                         .padding(12.dp) //padding between items
                 )
             }
-            if (showProfile) {
-                ProfileScreen(userInfo)
-            }
-            Row(modifier = standardModifier, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {
-                    showProfile = true
-                }) {
-                    Icon(Icons.Filled.PermIdentity, contentDescription = "Profile")
-                }
-                Text(text = "Profile")
-            }
 
-            Row(modifier = standardModifier, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {
+
+            Row(
+                modifier = standardModifier.clickable(onClick = {
                     val intent = Intent(context, MainActivity::class.java).apply {
                         flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
                     }
@@ -88,11 +84,11 @@ fun DrawerContent(
                     }
 
                     context.startActivity(intent)
-                }) {
-                    Icon(Icons.Filled.Logout, contentDescription = "Log out")
-                }
-
-                Text(text = "Log out")
+                }),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Logout, contentDescription = "Log out")
+                Text(text = "Log out", modifier = Modifier.padding(start = 5.dp))
             }
         }
     }

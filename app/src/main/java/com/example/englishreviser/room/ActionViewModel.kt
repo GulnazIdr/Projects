@@ -1,6 +1,7 @@
 package com.example.englishreviser.room
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -8,21 +9,19 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
 class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: CardDAO): ViewModel() {
+    var card by mutableStateOf<CardInfoEntity?>(null)
+        private set
 
-    var nativeWord by mutableStateOf("")
-    var translatedWord by mutableStateOf("")
+    var folder by mutableStateOf<FolderInfoEntity?>(null)
+        private set
 
-    var folderName by mutableStateOf("")
-    var userName by mutableStateOf("")
+    var folderId by mutableIntStateOf(0)
 
     fun onEvent(event: ActionEvent){
         when(event){
             //cards
             is ActionEvent.AddCard -> {
-                when(event.words){
-                    WORDS.NATIVE -> nativeWord = event.value
-                    WORDS.TRANSLATED -> translatedWord = event.value
-                }
+                card = event.card
             }
 
             is ActionEvent.DeleteCard -> TODO()
@@ -32,8 +31,8 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
             ActionEvent.SaveCard -> {
                 viewModelScope.launch {
                     val card = CardInfoEntity(
-                        nativeWord = nativeWord,
-                        translatedWord = translatedWord,
+                        nativeWord = card?.nativeWord ?: "",
+                        translatedWord = card?.translatedWord ?: "",
                         folderId = 1 // TODO:
                     )
                     cardDAO.insertCards(card)
@@ -43,8 +42,7 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
 
             //folders
             is ActionEvent.AddFolder -> {
-                folderName = event.folderName
-                userName = event.userName
+                folder = event.folder
             }
 
             is ActionEvent.DeleteFolder -> TODO()
@@ -52,8 +50,8 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
             ActionEvent.SaveFolder -> {
                 viewModelScope.launch {
                     val folder = FolderInfoEntity(
-                        folderName = folderName,
-                        userName = userName
+                        folderName = folder?.folderName ?: "",
+                        userName = folder?.userName ?: ""
                     )
                     folderDAO.insertFolder(folder)
                 }

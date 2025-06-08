@@ -11,6 +11,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
+
+        ksp{
+            arg("room.schemaLocation", "$projectDir/schemas") //migration
+        }
+
         applicationId = "com.example.englishreviser"
         minSdk = 21
         targetSdk = 35
@@ -54,6 +59,19 @@ dependencies {
     ksp("androidx.room:room-compiler:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
     implementation("androidx.core:core:1.16.0")
+
+    implementation("androidx.room:room-testing:2.7.1")
+    implementation("com.google.truth:truth:1.1.3")
+
+    implementation("androidx.camera:camera-core:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-video:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+
+    implementation("androidx.camera:camera-view:1.4.2")
+    implementation("androidx.camera:camera-extensions:1.4.2")
+
+    implementation("androidx.compose.foundation:foundation:1.8.2")
 
 
     implementation(libs.androidx.core.ktx)

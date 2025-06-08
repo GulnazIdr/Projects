@@ -20,4 +20,7 @@ interface CardDAO {
 
     @Query("SELECT * FROM CARD_DATA WHERE (cardId = :cardId AND folderId = :folderId)")
     fun getCards(cardId: Int, folderId: Int): Flow<List<CardInfoEntity>>
+
+    @Query("SELECT * FROM CARD_DATA WHERE folderId = :folderId")
+    fun getCardsByFolder(folderId: Int): Flow<List<CardInfoEntity>>
 }

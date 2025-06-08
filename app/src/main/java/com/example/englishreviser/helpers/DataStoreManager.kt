@@ -23,6 +23,6 @@ class DataStoreManager(val context: Context) {
     }
 
     val getCurrentUser: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[CURRENT_USER].toString()
+        preferences[CURRENT_USER] ?: ""
     }
 }
