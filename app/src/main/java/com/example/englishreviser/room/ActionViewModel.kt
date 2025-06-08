@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: CardDAO): ViewModel() {
@@ -20,30 +23,23 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
     fun onEvent(event: ActionEvent){
         when(event){
             //cards
-            is ActionEvent.AddCard -> {
-                card = event.card
-            }
+            is ActionEvent.AddCard -> { card = event.card }
 
             is ActionEvent.DeleteCard -> TODO()
-
-            is ActionEvent.GetCardsByFolder -> TODO()
 
             ActionEvent.SaveCard -> {
                 viewModelScope.launch {
                     val card = CardInfoEntity(
                         nativeWord = card?.nativeWord ?: "",
                         translatedWord = card?.translatedWord ?: "",
-                        folderId = 1 // TODO:
+                        folderId = folderId
                     )
                     cardDAO.insertCards(card)
                 }
-
             }
 
             //folders
-            is ActionEvent.AddFolder -> {
-                folder = event.folder
-            }
+            is ActionEvent.AddFolder -> { folder = event.folder }
 
             is ActionEvent.DeleteFolder -> TODO()
 
@@ -56,9 +52,6 @@ class ActionViewModel(private val folderDAO: FolderDAO, private val cardDAO: Car
                     folderDAO.insertFolder(folder)
                 }
             }
-
-
-
         }
     }
 }

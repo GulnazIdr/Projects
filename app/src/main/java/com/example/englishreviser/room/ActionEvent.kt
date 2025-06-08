@@ -8,5 +8,4 @@ sealed interface ActionEvent {
     object SaveCard: ActionEvent
     data class AddCard(val card: CardInfoEntity) : ActionEvent
     data class DeleteCard(val card: CardInfoEntity) : ActionEvent
-    data class GetCardsByFolder(val folderId: Int): ActionEvent
 }

@@ -49,12 +49,12 @@ android {
 
 dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.0")
-    implementation(platform("androidx.compose:compose-bom:2025.05.00"))
     implementation("androidx.compose.material3:material3")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation ("androidx.compose.material:material-icons-extended")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 
+    //room
     implementation("androidx.room:room-runtime:2.7.1")
     ksp("androidx.room:room-compiler:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
@@ -63,6 +63,7 @@ dependencies {
     implementation("androidx.room:room-testing:2.7.1")
     implementation("com.google.truth:truth:1.1.3")
 
+    //camera
     implementation("androidx.camera:camera-core:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-video:1.4.2")
@@ -73,7 +74,9 @@ dependencies {
 
     implementation("androidx.compose.foundation:foundation:1.8.2")
 
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
+    //initial
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

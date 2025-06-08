@@ -26,13 +26,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.englishreviser.MainActivity
 import com.example.englishreviser.helpers.DataStoreManager
+import com.example.englishreviser.ui_helpers.ViewModelStates
 import kotlinx.coroutines.launch
 
 @Composable
 fun DrawerContent(
     navController: NavHostController,
     drawerState: DrawerState,
-    dataStoreManager: DataStoreManager,
+    dataStoreManager: DataStoreManager
 ){
     val context = LocalContext.current
     val standardModifier = Modifier.fillMaxWidth().padding(5.dp)
@@ -47,7 +48,6 @@ fun DrawerContent(
 
             Row(modifier = standardModifier, verticalAlignment = Alignment.CenterVertically)
             {
-
                 Icon(Icons.Filled.PermIdentity, contentDescription = "Profile")
                 Text(
                     text = "Profile",

@@ -1,10 +1,13 @@
 package com.example.englishreviser.ui_helpers
 
+import android.graphics.Bitmap
 import android.util.Patterns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class ViewModelStates : ViewModel()  {
     //password
@@ -84,10 +87,18 @@ class ViewModelStates : ViewModel()  {
         private set
 
     fun showAddCardDialog(){
-        isAddFolderDialogShown = true
+        isAddCardDialogShown = true
     }
 
     fun dismissAddCardDialog(){
-        isAddFolderDialogShown = false
+        isAddCardDialogShown = false
+    }
+
+    //camera
+    private val _bitmaps = MutableStateFlow<List<Bitmap>>(emptyList())
+    val bitmaps = _bitmaps.asStateFlow()
+
+    fun onTakePhoto(bitmap: Bitmap){
+        _bitmaps.value += bitmap
     }
 }

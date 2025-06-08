@@ -2,7 +2,9 @@
 
 package com.example.englishreviser
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -57,16 +59,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.englishreviser.fragments.CardItem
+import com.example.englishreviser.fragments.CardListPage
 import com.example.englishreviser.fragments.DialogAddCard
 import com.example.englishreviser.fragments.DialogAddFolder
 import com.example.englishreviser.fragments.DrawerContent
 import com.example.englishreviser.fragments.FolderItem
 import com.example.englishreviser.fragments.ProfileScreen
+import com.example.englishreviser.helpers.CameraPhoto
 import com.example.englishreviser.helpers.DataStoreManager
 import com.example.englishreviser.room.ActionViewModel
 import com.example.englishreviser.room.ActionViewModelFactory
 import com.example.englishreviser.room.CardDAO
+import com.example.englishreviser.room.FolderDAO
 import com.example.englishreviser.room.FolderInfoEntity
 import com.example.englishreviser.room.UserInfoEntity
 import com.example.englishreviser.room.UsersDatabase
@@ -100,7 +104,7 @@ class NavigationDrawer : ComponentActivity() {
                 .collectAsStateWithLifecycle(initialValue = null)
 
             EnglishReviserTheme {
-                    NavigationDrawerApp(dbViewModel, folderList, cardDao , currentUser, viewmodel, dataStoreManager, userInfo)
+                    NavigationDrawerApp(dbViewModel, folderList, cardDao, folderDao, currentUser, viewmodel, dataStoreManager, userInfo)
             }
         }
     }
@@ -111,6 +115,7 @@ fun NavigationDrawerApp(
     dbViewModel: ActionViewModel,
     listOfFolders: List<FolderInfoEntity>?,
     cardDao: CardDAO,
+    folderDao: FolderDAO,
     currentUser: String,
     viewmodel: ViewModelStates,
     dataStoreManager: DataStoreManager,
@@ -122,11 +127,11 @@ fun NavigationDrawerApp(
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     var currentFolderId = dbViewModel.folderId
+    var currentFolderName = folderDao.getFolderName(currentFolderId).collectAsState("").value
+    var context = LocalContext.current
 
     ModalNavigationDrawer(
-        drawerContent = {
-            DrawerContent(navController, drawerState, dataStoreManager)
-        },
+        drawerContent = { DrawerContent(navController, drawerState, dataStoreManager) },
         drawerState = drawerState
     ) {
         Scaffold(
@@ -173,7 +178,7 @@ fun NavigationDrawerApp(
                                             text = {Text("Set photo")},
                                             leadingIcon = { Icon(Icons.Filled.PhotoCamera, contentDescription = "edit photo") },
                                             onClick = {
-                                              //  context.startActivity(Intent(context, CameraPhoto::class.java))
+                                                context.startActivity(Intent(context, CameraPhoto::class.java))
                                             }
                                         )
                                     }
@@ -184,7 +189,7 @@ fun NavigationDrawerApp(
                     )
                 }else if(currentRoute == "card"){
                     TopAppBar(
-                        title = {Text("card's name")},
+                        title = {Text(currentFolderName.toString())},
                         navigationIcon = {
                             IconButton(onClick = {navController.popBackStack()}) {
                                 Icon(Icons.Default.ArrowBack, "Back to folders")
@@ -200,7 +205,7 @@ fun NavigationDrawerApp(
                         onClick = {
                             if(currentRoute == "home")
                                 viewmodel.showAddFolderDialog()
-                            else if(currentRoute == "card")
+                            if(currentRoute == "card")
                                 viewmodel.showAddCardDialog()
                         },
                         modifier = Modifier.padding(horizontal = 30.dp, vertical = 80.dp)
@@ -210,14 +215,14 @@ fun NavigationDrawerApp(
 
                     if(viewmodel.isAddFolderDialogShown)
                         DialogAddFolder(dbViewModel, currentUser, onDismiss = {viewmodel.dismissAddFolderDialog()})
-                    else if(viewmodel.isAddCardDialogShown)
+                    if(viewmodel.isAddCardDialogShown)
                         DialogAddCard(currentFolderId, dbViewModel, onDismiss = {viewmodel.dismissAddCardDialog()})
                 }
             }
 
         ){ paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)){
-                NavigationGraph(navController, listOfFolders, userInfo, cardDao, dbViewModel)
+                NavigationGraph(navController, listOfFolders, userInfo, dbViewModel, cardDao, viewmodel)
             }
         }
     }
@@ -228,18 +233,18 @@ fun NavigationGraph(
     navController: NavHostController,
     listOfFolders: List<FolderInfoEntity>?,
     userInfo: UserInfoEntity?,
+    dbViewModel: ActionViewModel,
     cardDAO: CardDAO,
-    dbViewModel: ActionViewModel
+    viewmodel: ViewModelStates
 ){
-    var currentFolderId = dbViewModel.folderId
-    var listOfCards = cardDAO.getCardsByFolder(currentFolderId).collectAsState(null).value
+    var folderId = dbViewModel.folderId
 
     NavHost(navController, startDestination = "home"){
         composable("home") {
             LazyColumn(contentPadding = PaddingValues(4.dp)) {
                 if(listOfFolders != null) {
                     items(listOfFolders.size) { index ->
-                        FolderItem(index, listOfFolders, dbViewModel)
+                        FolderItem(index, listOfFolders, navController, dbViewModel)
                     }
                 }
             }
@@ -247,17 +252,9 @@ fun NavigationGraph(
 
         composable("settings") { ScreenContent("Settings screen") }
 
-        composable("profile") { ProfileScreen(userInfo) }
+        composable("profile") { ProfileScreen(userInfo, viewmodel) }
 
-        composable("card" ) {
-            LazyColumn(contentPadding = PaddingValues(4.dp)) {
-                if(listOfCards != null){
-                    items(listOfCards.size){ index ->
-                        CardItem(index, listOfCards)
-                    }
-                }
-            }
-        }
+        composable("card"){ CardListPage(cardDAO, folderId)}
     }
 }
 

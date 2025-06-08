@@ -18,6 +18,9 @@ interface FolderDAO {
     @Update
     suspend fun updateFolder(folder: FolderInfoEntity)
 
+    @Query("SELECT folderName FROM FOLDER_DATA WHERE folderId = :folderId LIMIT 1")
+    fun getFolderName(folderId: Int): Flow<String?>
+
     @Query("SELECT * FROM FOLDER_DATA WHERE folderId = :folderId")
     fun getFolders(folderId: Int): Flow<List<FolderInfoEntity>>
 
