@@ -1,13 +1,22 @@
 package com.example.englishreviser.ui_helpers
 
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Log
 import android.util.Patterns
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 class ViewModelStates : ViewModel()  {
     //password
@@ -100,5 +109,48 @@ class ViewModelStates : ViewModel()  {
 
     fun onTakePhoto(bitmap: Bitmap){
         _bitmaps.value += bitmap
+    }
+
+    //user photo
+    private val _bitmapState = mutableStateOf<Bitmap?>(null)
+    var bitmapState : State<Bitmap?> = _bitmapState
+
+    fun loadUserPhoto(context: Context){
+        try {
+            val fin = File(context.filesDir ,"userPhotos.txt")
+            _bitmapState.value = BitmapFactory.decodeFile(fin.absolutePath)
+
+        }catch (e: IOException){
+            Log.d("CAMERA2", "can't load the image $e")
+        }
+    }
+
+    fun saveUserPhoto(context: Context, bitmap: Bitmap){
+        try {
+            val fos: FileOutputStream = context.openFileOutput("userPhotos.txt", MODE_PRIVATE)
+
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos)
+            fos.flush()
+            fos.close()
+        }catch (e: okio.IOException){
+            Log.d("CAMERA", "could not save the photo $e")
+        }
+    }
+
+    //permissions
+
+    val visiblePermissionDialogQueue = mutableStateListOf<String>()
+
+    fun dismissPermissionDialog(){
+        visiblePermissionDialogQueue.removeAt(0)
+    }
+
+    fun onPermissionResult(
+        permission: String,
+        isGranted: Boolean
+    ){
+        if(!isGranted && !visiblePermissionDialogQueue.contains(permission)){
+            visiblePermissionDialogQueue.add(permission)
+        }
     }
 }

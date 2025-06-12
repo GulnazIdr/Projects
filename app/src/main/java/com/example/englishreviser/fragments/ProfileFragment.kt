@@ -1,18 +1,18 @@
 package com.example.englishreviser.fragments
 
-import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,7 +20,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -28,17 +30,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.englishreviser.R
-import com.example.englishreviser.helpers.CameraPhoto
 import com.example.englishreviser.room.UserInfoEntity
 import com.example.englishreviser.ui_helpers.ViewModelStates
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    userInfo: UserInfoEntity?,
-    viewModel: ViewModelStates
+    userInfo: UserInfoEntity?
 ){
     var userName by remember { mutableStateOf(userInfo?.name ?: "") }
     var userEmail by remember { mutableStateOf(userInfo?.email ?: "") }
@@ -49,13 +49,20 @@ fun ProfileScreen(
     var textStyle2 = TextStyle.Default.copy(fontSize = 15.sp)
     var modifierText = Modifier.padding(top = 5.dp, bottom = 17.dp)
 
-    val bitmaps = viewModel.bitmaps.collectAsStateWithLifecycle().value
     val context = LocalContext.current
+    val applicationContext = LocalContext.current.applicationContext
+    var viewModel = viewModel<ViewModelStates>()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadUserPhoto(applicationContext)
+    }
+
+    val bitmapImage by viewModel.bitmapState
 
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
-    val modifier = Modifier.width(100.dp).height(100.dp).clickable(onClick = {
-        context.startActivity(Intent(context, CameraPhoto::class.java))
+    val modifier = Modifier.size(70.dp).clip(CircleShape).clickable(onClick = {
+       // context.startActivity(Intent(context, CameraPhoto::class.java))
     })
 
         Column(modifier = Modifier
@@ -65,19 +72,24 @@ fun ProfileScreen(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ){
-                if(bitmaps.isNotEmpty()) {
+
+                bitmapImage?.let {
                     Image(
-                        bitmap = bitmaps.last().asImageBitmap(),
+                        bitmap = it.asImageBitmap(),
                         contentDescription = "userImage",
-                        modifier = modifier
+                        modifier = modifier,
+                        contentScale = ContentScale.Crop
                     )
-                }else{
+                }
+
+                if(bitmapImage == null){
                     Image(
-                        painter = painterResource(id = R.drawable.user),
+                        painter = painterResource(R.drawable.user),
                         contentDescription = "userImage",
                         modifier = modifier
                     )
                 }
+
                 BasicTextField(
                     value = userName,
                     onValueChange = {userName = it},
@@ -130,3 +142,4 @@ fun ProfileScreen(
             }
         }
 }
+

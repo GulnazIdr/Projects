@@ -2,12 +2,19 @@
 
 package com.example.englishreviser
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +59,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -59,11 +68,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.englishreviser.fragments.CameraPermissonTextProvider
 import com.example.englishreviser.fragments.CardListPage
 import com.example.englishreviser.fragments.DialogAddCard
 import com.example.englishreviser.fragments.DialogAddFolder
 import com.example.englishreviser.fragments.DrawerContent
 import com.example.englishreviser.fragments.FolderItem
+import com.example.englishreviser.fragments.PermissionDialogRationale
 import com.example.englishreviser.fragments.ProfileScreen
 import com.example.englishreviser.helpers.CameraPhoto
 import com.example.englishreviser.helpers.DataStoreManager
@@ -129,6 +140,50 @@ fun NavigationDrawerApp(
     var currentFolderId = dbViewModel.folderId
     var currentFolderName = folderDao.getFolderName(currentFolderId).collectAsState("").value
     var context = LocalContext.current
+    val dialogQueue = viewmodel.visiblePermissionDialogQueue
+
+    val isDenied = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED
+
+    val cameraPermissionResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            viewmodel.onPermissionResult(
+                permission = Manifest.permission.CAMERA,
+                isGranted = isGranted
+            )
+        }
+    )
+
+    val multiplePermissionResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = { perms ->
+            perms.keys.forEach { permission ->
+                viewmodel.onPermissionResult(
+                    permission = permission,
+                    isGranted = perms[permission] == true
+                )
+            }
+        }
+    )
+
+    dialogQueue.reversed().forEach { permission ->
+        PermissionDialogRationale(
+            CameraPermissonTextProvider(),
+            if(context is Activity)
+                !shouldShowRequestPermissionRationale(
+                    context, permission
+                ) && isDenied
+            else false,
+            onDismiss = viewmodel::dismissPermissionDialog,
+            onAccept = {
+                viewmodel.dismissPermissionDialog()
+                multiplePermissionResultLauncher.launch(
+                    arrayOf(permission)
+                )
+            },
+            onGoToSettings = { context.openAppSettings() }
+        )
+    }
 
     ModalNavigationDrawer(
         drawerContent = { DrawerContent(navController, drawerState, dataStoreManager) },
@@ -178,7 +233,11 @@ fun NavigationDrawerApp(
                                             text = {Text("Set photo")},
                                             leadingIcon = { Icon(Icons.Filled.PhotoCamera, contentDescription = "edit photo") },
                                             onClick = {
-                                                context.startActivity(Intent(context, CameraPhoto::class.java))
+                                                if(isDenied)
+                                                    cameraPermissionResultLauncher.launch(
+                                                        Manifest.permission.CAMERA
+                                                    )
+                                                else navController.navigate("camera")
                                             }
                                         )
                                     }
@@ -222,7 +281,7 @@ fun NavigationDrawerApp(
 
         ){ paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)){
-                NavigationGraph(navController, listOfFolders, userInfo, dbViewModel, cardDao, viewmodel)
+                NavigationGraph(navController, listOfFolders, userInfo, dbViewModel, cardDao)
             }
         }
     }
@@ -234,8 +293,7 @@ fun NavigationGraph(
     listOfFolders: List<FolderInfoEntity>?,
     userInfo: UserInfoEntity?,
     dbViewModel: ActionViewModel,
-    cardDAO: CardDAO,
-    viewmodel: ViewModelStates
+    cardDAO: CardDAO
 ){
     var folderId = dbViewModel.folderId
 
@@ -252,9 +310,11 @@ fun NavigationGraph(
 
         composable("settings") { ScreenContent("Settings screen") }
 
-        composable("profile") { ProfileScreen(userInfo, viewmodel) }
+        composable("profile") { ProfileScreen(userInfo) }
 
         composable("card"){ CardListPage(cardDAO, folderId)}
+
+        composable("camera") { CameraPhoto() }
     }
 }
 
@@ -271,6 +331,17 @@ fun ScreenContent(text: String){
             fontSize = 24.sp
         )
     }
+}
+
+fun Context.openAppSettings(){
+    startActivity(
+        Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null)
+        ).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+    )
 }
 
 

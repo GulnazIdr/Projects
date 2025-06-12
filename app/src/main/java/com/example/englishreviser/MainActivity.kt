@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
         val dataStoreManager = DataStoreManager(this)
         val formValidationViewModel : ViewModelStates by viewModels()
 
